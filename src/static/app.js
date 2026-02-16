@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = "";
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
@@ -26,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
           <p><strong>Participants:</strong></p>
-          ${details.participants.length > 0 ? `<ul>${details.participants.map(p => `<li>${p}</li>`).join('')}</ul>` : '<p>No participants yet.</p>'}
+          ${details.participants.length > 0 ? details.participants.map(p => `<div class="participant"><span>${p}</span><button class="delete-btn" data-activity="${name}" data-email="${p}">×</button></div>`).join('') : '<p>No participants yet.</p>'}
         `;
 
         activitiesList.appendChild(activityCard);
@@ -87,4 +88,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+
+  // Handle delete participant
+  document.addEventListener('click', async (event) => {
+    if (event.target.classList.contains('delete-btn')) {
+      const activity = event.target.dataset.activity;
+      const email = event.target.dataset.email;
+      try {
+        const response = await fetch(
+          `/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
+          {
+            method: "DELETE",
+          }
+        );
+        if (response.ok) {
+          fetchActivities();
+        } else {
+          const result = await response.json();
+          alert(result.detail || "Failed to remove participant");
+        }
+      } catch (error) {
+        alert("Error removing participant");
+        console.error("Error:", error);
+      }
+    }
+  });
 });
